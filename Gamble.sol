@@ -22,12 +22,23 @@ contract Gamble {
     
     constructor() {
         owner = msg.sender;
-        ziotAddress = IERC20(0xc175a1b4b92344EbDDeA5b4d31c4B3A9a672c9b6);
+        ziotAddress = IERC20(0x728912fe2AD8f2962E164Bfa21Fd3B231e3eeB75);
         BANK_ROLL = 0;
     }
     
-    function initializeBankroll() public {
+    modifier onlyOwner() {
         require(msg.sender == owner);
+        _;
+    }
+    
+    // admin function
+    function withdrawFunds(uint _amount, address _withdrawAddress) external onlyOwner returns(bool) {
+        ziotAddress.safeTransferFrom(address(this), _withdrawAddress, _amount);
+        return true;
+    }
+    
+    // admin function
+    function initializeBankroll() public onlyOwner {
         BANK_ROLL = ziotAddress.balanceOf(address(this));
     }
     
@@ -44,22 +55,22 @@ contract Gamble {
         return true;
     }
     
-    function getWinner() external returns(bool) {
+    function getWinner() external returns(string memory) {
         require(userBlockNumber[msg.sender] != 0, "No bets pending.");
         require(block.number > userBlockNumber[msg.sender] + 5, "Not enough blocks have passed.");
         if((uint256(blockhash(userBlockNumber[msg.sender]  + 5)) % 2) == userChoice[msg.sender]){
             uint amountSendBack = ((userBetAmount[msg.sender]*(100-PERCENT_FEE))/100)*2;
             ziotAddress.safeTransfer(msg.sender, amountSendBack);
-            BANK_ROLL -= userBetAmount[msg.sender] * 2;
+            BANK_ROLL -= amountSendBack;
             userBlockNumber[msg.sender] = 0;
             userChoice[msg.sender] = 0;
             userBetAmount[msg.sender] = 0;
-            return true;
+            return "won, very sad";
         } else {
             userBlockNumber[msg.sender] = 0;
             userChoice[msg.sender] = 0;
             userBetAmount[msg.sender] = 0;
-            return false;
+            return "lost, very sad";
         }
         
     }
