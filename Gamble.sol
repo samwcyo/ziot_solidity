@@ -81,20 +81,14 @@ contract Gamble {
                 uint amountSendBack = ((bets[msg.sender].amount*(100-PERCENT_FEE))/100)*2;
                 ziotAddress.safeTransfer(msg.sender, amountSendBack);
                 BANK_ROLL -= amountSendBack;
-                bets[msg.sender].blockNumber = 0;
-                bets[msg.sender].choice = 0;
-                bets[msg.sender].amount = 0;
+                delete bets[msg.sender];
                 return true;
             } else {
-                bets[msg.sender].blockNumber = 0;
-                bets[msg.sender].choice = 0;
-                bets[msg.sender].amount = 0;
+                delete bets[msg.sender];
                 return false;
             }
         } else {
-            bets[msg.sender].blockNumber = 0;
-            bets[msg.sender].choice = 0;
-            bets[msg.sender].amount = 0;
+            delete bets[msg.sender];
             return false;
         }
     }
