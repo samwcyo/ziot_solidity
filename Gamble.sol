@@ -17,7 +17,7 @@ contract Gamble {
     mapping (address => Bet) public bets;
     
     uint public constant PERCENT_FEE = 5;
-    uint public constant MAX_BET_AMOUNT_PERCENT = 10;
+    uint public constant MAX_BET_AMOUNT_PERCENT = 25;
     uint public BANK_ROLL;
     bool public IS_OPEN;
     
@@ -26,7 +26,7 @@ contract Gamble {
     
     constructor() {
         owner = msg.sender;
-        ziotAddress = IERC20(0xfB22cED41B1267dA411F68c879f4Defd0bD4796a);
+        ziotAddress = IERC20(0x7EF2e0048f5bAeDe046f6BF797943daF4ED8CB47);
         BANK_ROLL = 0;
     }
     
@@ -36,16 +36,13 @@ contract Gamble {
     }
     
     function withdrawFunds(uint _amount, address _withdrawAddress) external onlyOwner returns(bool) {
-        ziotAddress.safeTransferFrom(address(this), _withdrawAddress, _amount);
+        ziotAddress.safeTransfer(_withdrawAddress, _amount);
+        BANK_ROLL -= _amount;
         return true;
     }
     
     function initializeBankroll() public onlyOwner {
         BANK_ROLL = ziotAddress.balanceOf(address(this));
-        IS_OPEN = true;
-    }
-    
-    function openCasino() public onlyOwner {
         IS_OPEN = true;
     }
     
@@ -55,10 +52,11 @@ contract Gamble {
     
     function gamble(uint256 _amount, uint _userChoice) external returns(bool) {
         uint maxBetAmount = (BANK_ROLL * MAX_BET_AMOUNT_PERCENT)/100;
-        require(_amount > 0, "Cannot bet 0 ziots.");
+        require(_amount > 0);
+        require(_userChoice == 0 || _userChoice == 1);
         require(IS_OPEN == true);
-        require(bets[msg.sender].blockNumber == 0, "Bet already pending.");
-        require(_amount <= maxBetAmount, "Bet too large. Bet max 10% of balance.");
+        require(bets[msg.sender].blockNumber == 0);
+        require(_amount <= maxBetAmount);
         ziotAddress.safeTransferFrom(msg.sender, address(this), _amount);
         bets[msg.sender].blockNumber = block.number;
         bets[msg.sender].choice = _userChoice;
@@ -71,14 +69,21 @@ contract Gamble {
         require(bets[msg.sender].blockNumber != 0, "No bets pending.");
         require(IS_OPEN == true);
         require(block.number > bets[msg.sender].blockNumber + 5, "Not enough blocks have passed.");
-        if((uint256(blockhash(bets[msg.sender].blockNumber  + 5)) % 2) == bets[msg.sender].choice){
-            uint amountSendBack = ((bets[msg.sender].amount*(100-PERCENT_FEE))/100)*2;
-            ziotAddress.safeTransfer(msg.sender, amountSendBack);
-            BANK_ROLL -= amountSendBack;
-            bets[msg.sender].blockNumber = 0;
-            bets[msg.sender].choice = 0;
-            bets[msg.sender].amount = 0;
-            return true;
+        if(block.number < bets[msg.sender].blockNumber + 250){
+            if((uint256(blockhash(bets[msg.sender].blockNumber  + 5)) % 2) == bets[msg.sender].choice){
+                uint amountSendBack = ((bets[msg.sender].amount*(100-PERCENT_FEE))/100)*2;
+                ziotAddress.safeTransfer(msg.sender, amountSendBack);
+                BANK_ROLL -= amountSendBack;
+                bets[msg.sender].blockNumber = 0;
+                bets[msg.sender].choice = 0;
+                bets[msg.sender].amount = 0;
+                return true;
+            } else {
+                bets[msg.sender].blockNumber = 0;
+                bets[msg.sender].choice = 0;
+                bets[msg.sender].amount = 0;
+                return false;
+            }
         } else {
             bets[msg.sender].blockNumber = 0;
             bets[msg.sender].choice = 0;
