@@ -17,8 +17,8 @@ contract Gamble {
     
     mapping (address => Bet) public bets;
     
-    uint public MAX_BET_AMOUNT_PERCENT = 25;
-    uint public PERCENT_FEE = 5;
+    uint public MAX_BET_AMOUNT_PERCENT;
+    uint public PERCENT_FEE;
     uint public BANK_ROLL;
     bool public IS_OPEN;
     
@@ -35,7 +35,9 @@ contract Gamble {
     
     constructor() {
         owner = msg.sender;
-        ziotAddress = IERC20(0xd7Ca4e99F7C171B9ea2De80d3363c47009afaC5F);
+        ziotAddress = IERC20(0xfB22cED41B1267dA411F68c879f4Defd0bD4796a);
+        MAX_BET_AMOUNT_PERCENT = 25;
+        PERCENT_FEE = 10;
         BANK_ROLL = 0;
     }
     
