@@ -19,13 +19,14 @@ contract Gamble {
     uint public constant PERCENT_FEE = 5;
     uint public constant MAX_BET_AMOUNT_PERCENT = 10;
     uint public BANK_ROLL;
+    bool public IS_OPEN;
     
     address public owner;
     IERC20 public ziotAddress;
     
     constructor() {
         owner = msg.sender;
-        ziotAddress = IERC20(0x728912fe2AD8f2962E164Bfa21Fd3B231e3eeB75);
+        ziotAddress = IERC20(0xfB22cED41B1267dA411F68c879f4Defd0bD4796a);
         BANK_ROLL = 0;
     }
     
@@ -34,20 +35,28 @@ contract Gamble {
         _;
     }
     
-    // admin function
     function withdrawFunds(uint _amount, address _withdrawAddress) external onlyOwner returns(bool) {
         ziotAddress.safeTransferFrom(address(this), _withdrawAddress, _amount);
         return true;
     }
     
-    // admin function
     function initializeBankroll() public onlyOwner {
         BANK_ROLL = ziotAddress.balanceOf(address(this));
+        IS_OPEN = true;
+    }
+    
+    function openCasino() public onlyOwner {
+        IS_OPEN = true;
+    }
+    
+    function closeCasino() public onlyOwner {
+        IS_OPEN = false;
     }
     
     function gamble(uint256 _amount, uint _userChoice) external returns(bool) {
         uint maxBetAmount = (BANK_ROLL * MAX_BET_AMOUNT_PERCENT)/100;
         require(_amount > 0, "Cannot bet 0 ziots.");
+        require(IS_OPEN == true);
         require(bets[msg.sender].blockNumber == 0, "Bet already pending.");
         require(_amount <= maxBetAmount, "Bet too large. Bet max 10% of balance.");
         ziotAddress.safeTransferFrom(msg.sender, address(this), _amount);
@@ -58,8 +67,9 @@ contract Gamble {
         return true;
     }
     
-    function getWinner() external returns(string memory) {
+    function getWinner() external returns(bool) {
         require(bets[msg.sender].blockNumber != 0, "No bets pending.");
+        require(IS_OPEN == true);
         require(block.number > bets[msg.sender].blockNumber + 5, "Not enough blocks have passed.");
         if((uint256(blockhash(bets[msg.sender].blockNumber  + 5)) % 2) == bets[msg.sender].choice){
             uint amountSendBack = ((bets[msg.sender].amount*(100-PERCENT_FEE))/100)*2;
@@ -68,14 +78,13 @@ contract Gamble {
             bets[msg.sender].blockNumber = 0;
             bets[msg.sender].choice = 0;
             bets[msg.sender].amount = 0;
-            return "u won u lucky cunt";
+            return true;
         } else {
             bets[msg.sender].blockNumber = 0;
             bets[msg.sender].choice = 0;
             bets[msg.sender].amount = 0;
-            return "u lost u dumb loser";
+            return false;
         }
-        
     }
     
 }
