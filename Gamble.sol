@@ -1,4 +1,5 @@
 pragma solidity ^0.8.0;
+
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/IERC20.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -16,17 +17,25 @@ contract Gamble {
     
     mapping (address => Bet) public bets;
     
-    uint public constant PERCENT_FEE = 5;
-    uint public constant MAX_BET_AMOUNT_PERCENT = 25;
+    uint public MAX_BET_AMOUNT_PERCENT = 25;
+    uint public PERCENT_FEE = 5;
     uint public BANK_ROLL;
     bool public IS_OPEN;
     
     address public owner;
     IERC20 public ziotAddress;
     
+    function updateSettings(uint _maxBetAmountPercent, uint _percentFee, bool _isOpen) public onlyOwner returns(bool) {
+        require(_maxBetAmountPercent > 1 && _maxBetAmountPercent < 100 && _percentFee > 1 && _percentFee < 100);
+        MAX_BET_AMOUNT_PERCENT = _maxBetAmountPercent;
+        PERCENT_FEE = _percentFee;
+        IS_OPEN = _isOpen;
+        return true;
+    }
+    
     constructor() {
         owner = msg.sender;
-        ziotAddress = IERC20(0x7EF2e0048f5bAeDe046f6BF797943daF4ED8CB47);
+        ziotAddress = IERC20(0xd7Ca4e99F7C171B9ea2De80d3363c47009afaC5F);
         BANK_ROLL = 0;
     }
     
@@ -44,10 +53,6 @@ contract Gamble {
     function initializeBankroll() public onlyOwner {
         BANK_ROLL = ziotAddress.balanceOf(address(this));
         IS_OPEN = true;
-    }
-    
-    function closeCasino() public onlyOwner {
-        IS_OPEN = false;
     }
     
     function gamble(uint256 _amount, uint _userChoice) external returns(bool) {
