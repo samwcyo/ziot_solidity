@@ -1,4 +1,4 @@
-//SPDX-License-Identifier: propietary
+//SPDX-License-Identifier: proprietary
 
 pragma solidity ^0.8.0;
 
@@ -61,6 +61,14 @@ contract Game {
             }
             return 1;
         }
+    }
+    
+    function winPvp(uint _attackerId, uint _victimId) internal returns (bool){
+        
+    }
+    
+    function losePvp(uint _attackerId, uint _victimId) internal returns (bool){
+        
     }
     
     function getOwnedSodapops(uint _id) public view returns(uint){
